@@ -7,7 +7,11 @@ const Stack = createStackNavigator()
 
 export default function StackNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
       <Stack.Screen
         name="RequestTrip"
         component={RequestTripScreen}

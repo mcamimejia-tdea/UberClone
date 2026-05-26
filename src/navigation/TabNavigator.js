@@ -1,14 +1,29 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import Icon from "@react-native-vector-icons/fontawesome-free-solid"
+import { FontAwesomeFreeSolid as Icon } from "@react-native-vector-icons/fontawesome-free-solid/static"
 import StackNavigator from "./StackNavigator"
 import ActivityScreen from "../screens/ActivityScreen"
 import AccountScreen from "../screens/AccountScreen"
+import theme from "../styles/theme"
 
 const Tab = createBottomTabNavigator()
 
 export default function TabNavigator() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: true,
+        tabBarActiveTintColor: theme.colors.tabActive,
+        tabBarInactiveTintColor: theme.colors.tabInactive,
+        tabBarStyle: {
+          backgroundColor: theme.colors.surface,
+          borderTopColor: theme.colors.border,
+        },
+        tabBarLabelStyle: {
+          fontSize: theme.typography.size.caption,
+          fontWeight: theme.typography.weight.medium,
+        },
+      }}
+    >
       <Tab.Screen
         name="RequestTripTab"
         component={StackNavigator}
