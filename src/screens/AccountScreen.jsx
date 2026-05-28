@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import commonStyles from "../styles/commonStyles"
 import theme from "../styles/theme"
 import { useAccountContext } from "../context/AccountContext"
+import { useLanguage } from "../context/LanguageContext"
 import {
   createAccount,
   getAccount,
@@ -32,11 +33,24 @@ const EMPTY_FORM = {
 
 const MAX_FULL_NAME_LENGTH = 50
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const GENDER_OPTIONS = ["Female", "Male", "Other"]
-const LANGUAGE_OPTIONS = ["Spanish", "English"]
+const GENDER_OPTIONS = [
+  { value: "Female", labelKey: "genderFemale" },
+  { value: "Male", labelKey: "genderMale" },
+  { value: "Other", labelKey: "genderOther" },
+]
+const LANGUAGE_OPTIONS = [
+  { value: "Spanish", labelKey: "languageSpanish" },
+  { value: "English", labelKey: "languageEnglish" },
+]
+
+const getOptionLabel = (value, options, t) => {
+  const option = options.find((item) => item.value === value)
+  return option ? t(option.labelKey) : value || "-"
+}
 
 function AccountScreen() {
   const { accountId, isReady, setAccountId } = useAccountContext()
+  const { t, setLanguageFromAccountValue } = useLanguage()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -94,7 +108,7 @@ function AccountScreen() {
         })
         setIsEditMode(false)
       } catch (error) {
-        Alert.alert("Error", "Could not load account details.")
+        Alert.alert(t("alertErrorTitle"), t("alertLoadAccountError"))
       } finally {
         setIsLoading(false)
       }
@@ -137,26 +151,29 @@ function AccountScreen() {
   const handleSave = async () => {
     if (!canSubmit) {
       if (form.fullName.trim().length === 0) {
-        Alert.alert("Missing field", "Full Name is required.")
+        Alert.alert(t("alertMissingFieldTitle"), t("alertMissingFullName"))
         return
       }
 
       if (form.fullName.trim().length > MAX_FULL_NAME_LENGTH) {
-        Alert.alert("Invalid Full Name", `Full Name must be ${MAX_FULL_NAME_LENGTH} characters or less.`)
+        Alert.alert(
+          t("alertInvalidFullNameTitle"),
+          t("alertInvalidFullName", { max: MAX_FULL_NAME_LENGTH })
+        )
         return
       }
 
       if (form.email.trim().length === 0) {
-        Alert.alert("Missing field", "Email is required.")
+        Alert.alert(t("alertMissingFieldTitle"), t("alertMissingEmail"))
         return
       }
 
       if (!isEmailValid) {
-        Alert.alert("Invalid Email", "Please enter a valid email address.")
+        Alert.alert(t("alertInvalidEmailTitle"), t("alertInvalidEmail"))
         return
       }
 
-      Alert.alert("Missing fields", "Please complete all account fields before saving.")
+      Alert.alert(t("alertMissingFieldsTitle"), t("alertMissingFields"))
       return
     }
 
@@ -168,6 +185,7 @@ function AccountScreen() {
 
         const newAccount = { id: newAccountId, ...form }
         setAccount(newAccount)
+        setLanguageFromAccountValue(form.language)
         setIsGenderDropdownOpen(false)
         setIsLanguageDropdownOpen(false)
         setIsEditMode(false)
@@ -177,11 +195,12 @@ function AccountScreen() {
       await updateAccount(accountId, form)
       const updatedAccount = { id: accountId, ...form }
       setAccount(updatedAccount)
+      setLanguageFromAccountValue(form.language)
       setIsGenderDropdownOpen(false)
       setIsLanguageDropdownOpen(false)
       setIsEditMode(false)
     } catch (error) {
-      Alert.alert("Error", "Could not save account details.")
+      Alert.alert(t("alertErrorTitle"), t("alertSaveAccountError"))
     } finally {
       setIsSaving(false)
     }
@@ -190,9 +209,9 @@ function AccountScreen() {
   if (!isReady || isLoading) {
     return (
       <SafeAreaView style={commonStyles.container} edges={["top"]}>
-        <View style={styles.centeredState}>
+        <View style={commonStyles.centeredState}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading account...</Text>
+          <Text style={commonStyles.loadingText}>{t("loadingAccount")}</Text>
         </View>
       </SafeAreaView>
     )
@@ -200,12 +219,12 @@ function AccountScreen() {
 
   return (
     <SafeAreaView style={commonStyles.container} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.headerRow}>
-          <Text style={theme.text.title}>Account</Text>
+      <ScrollView contentContainerStyle={commonStyles.content} showsVerticalScrollIndicator={false}>
+        <View style={commonStyles.headerRow}>
+          <Text style={theme.text.title}>{t("accountTitle")}</Text>
           {hasAccount && !isEditMode ? (
-            <Pressable style={styles.editButton} onPress={() => setIsEditMode(true)}>
-              <Text style={styles.editButtonText}>Edit Account</Text>
+            <Pressable style={commonStyles.editButton} onPress={() => setIsEditMode(true)}>
+              <Text style={commonStyles.editButtonText}>{t("editAccount")}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -215,154 +234,154 @@ function AccountScreen() {
             <Image source={{ uri: form.photo }} style={styles.photo} />
           ) : (
             <View style={styles.photoPlaceholder}>
-              <Text style={styles.photoPlaceholderText}>No photo</Text>
+              <Text style={styles.photoPlaceholderText}>{t("noPhoto")}</Text>
             </View>
           )}
           {isEditMode ? (
             <Pressable style={styles.photoButton} onPress={handlePickPhoto}>
-              <Text style={styles.photoButtonText}>Select Photo</Text>
+              <Text style={styles.photoButtonText}>{t("selectPhoto")}</Text>
             </Pressable>
           ) : null}
         </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Full Name</Text>
+        <View style={commonStyles.fieldGroup}>
+          <Text style={commonStyles.label}>{t("fullName")}</Text>
           {isEditMode ? (
             <TextInput
               value={form.fullName}
               onChangeText={(value) => handleFieldChange("fullName", value)}
-              placeholder="Enter full name"
+              placeholder={t("enterFullName")}
               placeholderTextColor={theme.colors.textMuted}
               maxLength={MAX_FULL_NAME_LENGTH}
-              style={styles.input}
+              style={commonStyles.input}
             />
           ) : (
-            <Text style={styles.valueText}>{form.fullName || "-"}</Text>
+            <Text style={commonStyles.valueText}>{form.fullName || "-"}</Text>
           )}
         </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Phone Number</Text>
+        <View style={commonStyles.fieldGroup}>
+          <Text style={commonStyles.label}>{t("phoneNumber")}</Text>
           {isEditMode ? (
             <TextInput
               value={form.phoneNumber}
               onChangeText={(value) => handleFieldChange("phoneNumber", value)}
-              placeholder="Enter phone number"
+              placeholder={t("enterPhoneNumber")}
               placeholderTextColor={theme.colors.textMuted}
               keyboardType="phone-pad"
-              style={styles.input}
+              style={commonStyles.input}
             />
           ) : (
-            <Text style={styles.valueText}>{form.phoneNumber || "-"}</Text>
+            <Text style={commonStyles.valueText}>{form.phoneNumber || "-"}</Text>
           )}
         </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Gender</Text>
+        <View style={commonStyles.fieldGroup}>
+          <Text style={commonStyles.label}>{t("gender")}</Text>
           {isEditMode ? (
             <View>
               <Pressable
-                style={styles.dropdownTrigger}
+                style={commonStyles.dropdownTrigger}
                 onPress={() => setIsGenderDropdownOpen((prev) => !prev)}
               >
-                <Text style={form.gender ? styles.dropdownValueText : styles.dropdownPlaceholderText}>
-                  {form.gender || "Select gender"}
+                <Text style={form.gender ? commonStyles.dropdownValueText : commonStyles.dropdownPlaceholderText}>
+                  {form.gender ? getOptionLabel(form.gender, GENDER_OPTIONS, t) : t("selectGender")}
                 </Text>
               </Pressable>
 
               {isGenderDropdownOpen ? (
-                <View style={styles.dropdownList}>
+                <View style={commonStyles.dropdownList}>
                   {GENDER_OPTIONS.map((option) => (
                     <Pressable
-                      key={option}
-                      style={styles.dropdownOption}
+                      key={option.value}
+                      style={commonStyles.dropdownOption}
                       onPress={() => {
-                        handleFieldChange("gender", option)
+                        handleFieldChange("gender", option.value)
                         setIsGenderDropdownOpen(false)
                       }}
                     >
-                      <Text style={styles.dropdownOptionText}>{option}</Text>
+                      <Text style={commonStyles.dropdownOptionText}>{t(option.labelKey)}</Text>
                     </Pressable>
                   ))}
                 </View>
               ) : null}
             </View>
           ) : (
-            <Text style={styles.valueText}>{form.gender || "-"}</Text>
+            <Text style={commonStyles.valueText}>{getOptionLabel(form.gender, GENDER_OPTIONS, t)}</Text>
           )}
         </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Email</Text>
+        <View style={commonStyles.fieldGroup}>
+          <Text style={commonStyles.label}>{t("email")}</Text>
           {isEditMode ? (
             <TextInput
               value={form.email}
               onChangeText={(value) => handleFieldChange("email", value)}
-              placeholder="Enter email"
+              placeholder={t("enterEmail")}
               placeholderTextColor={theme.colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              style={styles.input}
+              style={commonStyles.input}
             />
           ) : (
-            <Text style={styles.valueText}>{form.email || "-"}</Text>
+            <Text style={commonStyles.valueText}>{form.email || "-"}</Text>
           )}
         </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Language</Text>
+        <View style={commonStyles.fieldGroup}>
+          <Text style={commonStyles.label}>{t("language")}</Text>
           {isEditMode ? (
             <View>
               <Pressable
-                style={styles.dropdownTrigger}
+                style={commonStyles.dropdownTrigger}
                 onPress={() => setIsLanguageDropdownOpen((prev) => !prev)}
               >
-                <Text style={form.language ? styles.dropdownValueText : styles.dropdownPlaceholderText}>
-                  {form.language || "Select language"}
+                <Text style={form.language ? commonStyles.dropdownValueText : commonStyles.dropdownPlaceholderText}>
+                  {form.language ? getOptionLabel(form.language, LANGUAGE_OPTIONS, t) : t("selectLanguage")}
                 </Text>
               </Pressable>
 
               {isLanguageDropdownOpen ? (
-                <View style={styles.dropdownList}>
+                <View style={commonStyles.dropdownList}>
                   {LANGUAGE_OPTIONS.map((option) => (
                     <Pressable
-                      key={option}
-                      style={styles.dropdownOption}
+                      key={option.value}
+                      style={commonStyles.dropdownOption}
                       onPress={() => {
-                        handleFieldChange("language", option)
+                        handleFieldChange("language", option.value)
                         setIsLanguageDropdownOpen(false)
                       }}
                     >
-                      <Text style={styles.dropdownOptionText}>{option}</Text>
+                      <Text style={commonStyles.dropdownOptionText}>{t(option.labelKey)}</Text>
                     </Pressable>
                   ))}
                 </View>
               ) : null}
             </View>
           ) : (
-            <Text style={styles.valueText}>{form.language || "-"}</Text>
+            <Text style={commonStyles.valueText}>{getOptionLabel(form.language, LANGUAGE_OPTIONS, t)}</Text>
           )}
         </View>
 
         {isEditMode ? (
-          <View style={styles.actionRow}>
+          <View style={commonStyles.actionRow}>
             {hasAccount ? (
               <Pressable
-                style={[styles.actionButton, styles.cancelButton]}
+                style={[commonStyles.actionButton, commonStyles.cancelButton]}
                 onPress={handleCancelEdit}
                 disabled={isSaving}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={commonStyles.cancelButtonText}>{t("cancel")}</Text>
               </Pressable>
             ) : null}
 
             <Pressable
-              style={[styles.actionButton, styles.saveButton, isSaving ? styles.disabledButton : null]}
+              style={[commonStyles.actionButton, commonStyles.saveButton, isSaving ? commonStyles.disabledButton : null]}
               onPress={handleSave}
               disabled={isSaving}
             >
-              <Text style={styles.saveButtonText}>{isSaving ? "Saving..." : "Save Account"}</Text>
+              <Text style={commonStyles.saveButtonText}>{isSaving ? t("saving") : t("saveAccount")}</Text>
             </Pressable>
           </View>
         ) : null}
@@ -372,35 +391,6 @@ function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  centeredState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: theme.spacing.md,
-  },
-  loadingText: {
-    ...theme.text.body,
-  },
-  content: {
-    paddingBottom: theme.spacing.xxxl,
-    gap: theme.spacing.lg,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  editButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.radius.pill,
-  },
-  editButtonText: {
-    ...theme.text.caption,
-    color: theme.colors.surface,
-    fontWeight: theme.typography.weight.semibold,
-  },
   photoCard: {
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
@@ -438,90 +428,6 @@ const styles = StyleSheet.create({
   photoButtonText: {
     ...theme.text.body,
     color: theme.colors.textPrimary,
-  },
-  fieldGroup: {
-    gap: theme.spacing.xs,
-  },
-  label: {
-    ...theme.text.caption,
-    fontWeight: theme.typography.weight.semibold,
-    color: theme.colors.textSecondary,
-  },
-  input: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.md,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    color: theme.colors.textPrimary,
-    fontSize: theme.typography.size.bodyLg,
-  },
-  dropdownTrigger: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.md,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  dropdownValueText: {
-    ...theme.text.bodyStrong,
-  },
-  dropdownPlaceholderText: {
-    ...theme.text.body,
-    color: theme.colors.textMuted,
-  },
-  dropdownList: {
-    marginTop: theme.spacing.xs,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.surface,
-    overflow: "hidden",
-  },
-  dropdownOption: {
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.divider,
-  },
-  dropdownOptionText: {
-    ...theme.text.bodyStrong,
-  },
-  valueText: {
-    ...theme.text.bodyStrong,
-  },
-  actionRow: {
-    flexDirection: "row",
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.sm,
-  },
-  actionButton: {
-    flex: 1,
-    borderRadius: theme.radius.pill,
-    paddingVertical: theme.spacing.md,
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  cancelButtonText: {
-    ...theme.text.body,
-    color: theme.colors.textPrimary,
-  },
-  saveButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  saveButtonText: {
-    ...theme.text.body,
-    color: theme.colors.surface,
-    fontWeight: theme.typography.weight.semibold,
-  },
-  disabledButton: {
-    opacity: 0.7,
   },
 })
 
