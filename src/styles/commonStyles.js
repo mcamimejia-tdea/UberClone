@@ -20,6 +20,19 @@ export default StyleSheet.create({
     paddingBottom: theme.spacing.xxxl,
     gap: theme.spacing.lg,
   },
+  alertCard: {
+    borderWidth: 1,
+    borderColor: theme.colors.warning,
+    borderRadius: theme.radius.md,
+    backgroundColor: "#FFF7ED",
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  alertText: {
+    ...theme.text.body,
+    color: theme.colors.warning,
+    fontWeight: theme.typography.weight.semibold,
+  },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",

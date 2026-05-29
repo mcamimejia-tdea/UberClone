@@ -84,6 +84,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        manifestPlaceholders = [
+            GOOGLE_MAPS_API_KEY: project.findProperty("GOOGLE_MAPS_API_KEY") ?: ""
+        ]
     }
     signingConfigs {
         debug {
@@ -108,6 +111,12 @@ android {
 }
 
 dependencies {
+    // Pin Google Play Services versions to prevent IncompatibleClassChangeError
+    // caused by react-native-maps and react-native-geolocation-service pulling
+    // different incompatible versions of the same GMS interfaces.
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
+
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 

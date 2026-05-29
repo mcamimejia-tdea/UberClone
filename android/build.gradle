@@ -19,3 +19,19 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Force a consistent version of play-services-location across all modules.
+// react-native-geolocation-service and react-native-maps can pull different
+// versions that produce IncompatibleClassChangeError at runtime.
+subprojects {
+    configurations.all {
+        resolutionStrategy {
+            // react-native-geolocation-service@5.3.1 compiled against 21.0.1 where
+            // FusedLocationProviderClient is a class. In 21.3.0+ it became an interface,
+            // causing IncompatibleClassChangeError at runtime — pin below that boundary.
+            force "com.google.android.gms:play-services-location:21.0.1"
+            // react-native-maps@1.27.2 uses MapColorScheme introduced in 19.0.0.
+            force "com.google.android.gms:play-services-maps:19.0.0"
+        }
+    }
+}

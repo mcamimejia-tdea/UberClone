@@ -12,7 +12,6 @@ function ActionRow({ saveText, handleSave, cancelText, handleCancel, disabled })
                 <Pressable
                     style={[commonStyles.actionButton, commonStyles.cancelButton]}
                     onPress={handleCancel}
-                    disabled={disabled}
                 >
                     <Text style={commonStyles.cancelButtonText}>{cancelText}</Text>
                 </Pressable>
