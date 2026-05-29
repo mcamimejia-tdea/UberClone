@@ -59,6 +59,40 @@ react {
  */
 def enableProguardInReleaseBuilds = false
 
+def loadEnvValue = { key ->
+    def envFile = rootProject.file("../.env")
+
+    if (!envFile.exists()) {
+        return null
+    }
+
+    for (line in envFile.readLines()) {
+        def cleanLine = line.trim()
+
+        if (!cleanLine || cleanLine.startsWith("#") || !cleanLine.contains("=")) {
+            continue
+        }
+
+        def index = cleanLine.indexOf("=")
+        def envKey = cleanLine.substring(0, index).trim()
+
+        if (envKey != key) {
+            continue
+        }
+
+        def envValue = cleanLine.substring(index + 1).trim()
+
+        if ((envValue.startsWith("\"") && envValue.endsWith("\"")) ||
+            (envValue.startsWith("'") && envValue.endsWith("'"))) {
+            envValue = envValue.substring(1, envValue.length() - 1)
+        }
+
+        return envValue
+    }
+
+    return null
+}
+
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
  *
@@ -84,8 +118,13 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        def googleMapsApiKey = project.findProperty("GOOGLE_MAPS_API_KEY") ?:
+            loadEnvValue("GOOGLE_MAPS_API_KEY") ?:
+            System.getenv("GOOGLE_MAPS_API_KEY") ?:
+            ""
+
         manifestPlaceholders = [
-            GOOGLE_MAPS_API_KEY: project.findProperty("GOOGLE_MAPS_API_KEY") ?: ""
+            GOOGLE_MAPS_API_KEY: googleMapsApiKey
         ]
     }
     signingConfigs {
