@@ -1,97 +1,224 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# UberClone (React Native)
 
-# Getting Started
+Mobile Uber-style app built with React Native, Firestore, Google Maps APIs, and Mercado Pago Checkout Pro.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+This app includes:
 
-## Step 1: Start Metro
+- Account profile creation and editing (with optional photo)
+- Trip request flow with pickup/destination autocomplete
+- Route and fare estimation by trip category
+- Checkout and payment with Mercado Pago Checkout Pro
+- Active trip simulation and trip history
+- English/Spanish UI localization and COP currency formatting
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Features and Behavior
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### Account tab
 
-```sh
-# Using npm
-npm start
+- Creates and updates an account in Firestore (`accounts` collection)
+- Stores selected language (`English` or `Spanish`) and syncs app UI language
+- Stores account id locally in AsyncStorage for session persistence
+- Allows selecting a profile image from gallery (saved as base64 in Firestore)
 
-# OR using Yarn
-yarn start
+### Request Trip tab
+
+- Requests location permission and obtains current user location
+- Uses Google Places Autocomplete for pickup and destination suggestions
+- Resolves selected suggestions with Google Place Details
+- Uses Google Directions and Distance Matrix to estimate route, distance, ETA, and fare
+- Supports 3 categories:
+	- Economy
+	- XL
+	- Premium
+- Saves the trip in Firestore (`trips` collection) with `status: "active"`
+- Navigates to Payment screen with the generated `tripId`
+
+### Payment screen
+
+- Loads trip by `tripId`
+- Creates Mercado Pago Checkout Pro preference
+- Opens checkout in-app browser (`react-native-inappbrowser-reborn`)
+- Listens for deep link return URLs:
+	- `uberclone://payment/success` -> approved
+	- `uberclone://payment/pending` -> pending
+	- `uberclone://payment/failure` -> rejected
+- Saves payment status in Firestore under `trip.payment`
+- If approved, routes to Current Trip screen
+
+### Current Trip screen
+
+- Displays pickup, destination, estimated metrics and total
+- Draws route polyline on map
+- Simulates moving driver along route for ~60 seconds
+- Marks trip as `finalized` in Firestore when simulation ends
+- Returns to Request Trip screen automatically
+
+### Activity tab
+
+- Loads account trips from Firestore
+- Sorts trips by newest first (`createdAt` descending)
+- Displays active/finalized badge, origin, destination, date, and total fare
+- Supports pull-to-refresh
+
+## Integrations
+
+### Firebase / Firestore
+
+- Firestore is used as the app data store
+- Collections used:
+	- `accounts`
+	- `trips`
+- Current Firebase project config is defined in `src/data/FirebaseConfig.js`
+
+### Google Maps APIs
+
+Used services:
+
+- Places Autocomplete API
+- Place Details API
+- Directions API
+- Distance Matrix API
+
+Also used for maps and location in app:
+
+- `react-native-maps`
+- `react-native-geolocation-service`
+
+Note: if Directions fails but Distance Matrix succeeds, the app still renders a fallback straight polyline between origin and destination.
+
+### Mercado Pago Checkout Pro
+
+- Creates checkout preference via Mercado Pago REST API
+- Uses deep links to return payment result to the app
+- Requires public key and access token in environment variables
+
+## Tech Stack
+
+- React Native `0.85.3`
+- React `19.2.3`
+- Redux Toolkit
+- React Navigation (Bottom Tabs + Stack)
+- Firebase Firestore
+- Axios
+- NativeWind/Tailwind setup available
+
+## Project Structure
+
+High-level folders:
+
+- `src/screens`: screen-level UI and flows
+- `src/services`: API and Firestore operations
+- `src/store`: Redux store and trip slice
+- `src/context`: account and language contexts
+- `src/components`: reusable UI components
+- `src/styles`: theme and shared styles
+- `src/constants`: fare configuration
+
+## Prerequisites
+
+Before running:
+
+- Node.js `>= 22.11.0`
+- React Native environment configured for Android and/or iOS
+- Android Studio (for Android)
+- Xcode + CocoaPods (for iOS)
+- A Firebase project with Firestore enabled
+- Google Cloud project with required Maps APIs enabled
+- Mercado Pago credentials (test or production)
+
+## Environment Variables
+
+Create `.env` in project root (copy from `.env.example`):
+
+```bash
+FIREBASE_API_KEY=YOUR_FIREBASE_API_KEY
+FIREBASE_AUTH_DOMAIN=YOUR_FIREBASE_AUTH_DOMAIN
+FIREBASE_PROJECT_ID=YOUR_FIREBASE_PROJECT_ID
+FIREBASE_STORAGE_BUCKET=YOUR_FIREBASE_STORAGE_BUCKET
+FIREBASE_MESSAGING_SENDER_ID=YOUR_FIREBASE_MESSAGING_SENDER_ID
+FIREBASE_APP_ID=YOUR_FIREBASE_APP_ID
+
+GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
+MERCADO_PAGO_PUBLIC_KEY=YOUR_MERCADO_PAGO_PUBLIC_KEY
+MERCADO_PAGO_ACCESS_TOKEN=YOUR_MERCADO_PAGO_ACCESS_TOKEN
 ```
 
-## Step 2: Build and run your app
+Notes:
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+- Firebase config is loaded from `.env` by `src/data/FirebaseConfig.js`.
+- `GOOGLE_MAPS_API_KEY` is used by JS services and injected into Android manifest placeholder.
+- Mercado Pago keys are required to create checkout preferences.
 
-### Android
+## Firebase Setup
 
-```sh
-# Using npm
-npm run android
+1. Create/choose Firebase project.
+2. Enable Cloud Firestore.
+3. Add Firebase credentials to `.env`:
+	- `FIREBASE_API_KEY`
+	- `FIREBASE_AUTH_DOMAIN`
+	- `FIREBASE_PROJECT_ID`
+	- `FIREBASE_STORAGE_BUCKET`
+	- `FIREBASE_MESSAGING_SENDER_ID`
+	- `FIREBASE_APP_ID`
+4. Ensure Firestore rules allow the operations used by this app (read/write `accounts` and `trips`).
 
-# OR using Yarn
-yarn android
+## Google Maps Setup
+
+1. In Google Cloud, enable:
+	 - Places API
+	 - Directions API
+	 - Distance Matrix API
+2. Add your API key to `.env` as `GOOGLE_MAPS_API_KEY`.
+3. For Android map rendering, key is consumed through `AndroidManifest.xml` meta-data.
+
+## Mercado Pago Setup
+
+1. Create Mercado Pago application/credentials.
+2. Add keys to `.env`:
+	 - `MERCADO_PAGO_PUBLIC_KEY`
+	 - `MERCADO_PAGO_ACCESS_TOKEN`
+3. Deep links already configured in app for checkout return URLs using `uberclone://payment/...`.
+4. Use Mercado Pago test credentials/cards for safe QA.
+
+## Install and Run
+
+### 1. Install dependencies
+
+```bash
+npm install
 ```
 
-### iOS
+### 2. iOS only: install pods
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
+```bash
 bundle install
+cd ios && bundle exec pod install
 ```
 
-Then, and every time you update your native dependencies, run:
+### 3. Start Metro
 
-```sh
-bundle exec pod install
+```bash
+npm start
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+### 4. Run app
 
-```sh
-# Using npm
+Android:
+
+```bash
+npm run android
+```
+
+iOS:
+
+```bash
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Scripts
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- `npm start`: start Metro
+- `npm run android`: build/run Android app
+- `npm run ios`: build/run iOS app
+- `npm test`: run tests
+- `npm run lint`: run ESLint
