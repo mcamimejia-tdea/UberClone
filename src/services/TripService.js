@@ -5,6 +5,7 @@ import {
 	getDoc,
 	getDocs,
 	query,
+	updateDoc,
 	where,
 } from "firebase/firestore";
 import { db } from "../data/FirebaseConfig";
@@ -52,4 +53,35 @@ export const getTripsByAccountId = async (accountId) => {
 		id: docSnapshot.id,
 		...docSnapshot.data(),
 	}));
+};
+
+/**
+ * Retrieve first active trip for a specific account ID.
+ * @param {string} accountId
+ * @returns {Promise<{ id: string } & Record<string, any> | null>}
+ */
+export const getActiveTripByAccountId = async (accountId) => {
+	const tripsQuery = query(
+		collection(db, TRIPS_COLLECTION),
+		where("accountId", "==", accountId),
+		where("status", "==", "active")
+	);
+
+	const querySnapshot = await getDocs(tripsQuery);
+
+	if (querySnapshot.docs.length === 0) return null;
+
+	const docSnapshot = querySnapshot.docs[0];
+	return { id: docSnapshot.id, ...docSnapshot.data() };
+};
+
+/**
+ * Update the status of a trip document.
+ * @param {string} tripId
+ * @param {string} status
+ * @returns {Promise<void>}
+ */
+export const updateTripStatus = async (tripId, status) => {
+	const docRef = doc(db, TRIPS_COLLECTION, tripId);
+	await updateDoc(docRef, { status });
 };

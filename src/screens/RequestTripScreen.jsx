@@ -36,6 +36,7 @@ import {
   setSelectedCategory,
 } from "../store/slices/tripSlice"
 import { createTrip } from "../services/TripService"
+import { formatCopCurrency } from "../utils/currency"
 import commonStyles from "../styles/commonStyles"
 import theme from "../styles/theme"
 
@@ -344,6 +345,7 @@ function RequestTripScreen({ navigation }) {
       estimate,
       category: selectedCategory,
       createdAt: new Date().toISOString(),
+      status: "active"
     }
 
     let requestId
@@ -351,7 +353,7 @@ function RequestTripScreen({ navigation }) {
     try {
       requestId = await createTrip(tripPayload)
     } catch (_saveError) {
-      Alert.alert(t("alertErrorTitle"), "Could not save trip right now. Please try again.")
+      Alert.alert(t("alertErrorTitle"), t("alertTripSaveError"))
       return
     }
 
@@ -361,6 +363,8 @@ function RequestTripScreen({ navigation }) {
         ...tripPayload,
       })
     )
+
+    dispatch(resetTripPlanner())
 
     navigation.navigate("CurrentTrip", { tripId: requestId })
   }
@@ -397,20 +401,20 @@ function RequestTripScreen({ navigation }) {
       <ScrollView contentContainerStyle={commonStyles.content} showsVerticalScrollIndicator={false}>
         <HeaderRow title={t("requestTripTitle")} />
 
-        <View style={styles.mapCard}>
+        <View style={commonStyles.mapCard}>
           <MapView
             ref={mapRef}
-            style={styles.map}
+            style={commonStyles.map}
             initialRegion={mapRegion}
             showsUserLocation
             showsMyLocationButton
           >
             {pickupPlace?.location ? (
-              <Marker coordinate={pickupPlace.location} title={t("pickupLabel")} />
+              <Marker coordinate={pickupPlace.location} title={t("pickupLabel")} pinColor={theme.colors.accent} />
             ) : null}
 
             {destinationPlace?.location ? (
-              <Marker coordinate={destinationPlace.location} title={t("destinationLabel")} />
+              <Marker coordinate={destinationPlace.location} title={t("destinationLabel")} pinColor={theme.colors.danger} />
             ) : null}
 
             {displayedRouteCoordinates.length > 1 ? (
@@ -486,7 +490,7 @@ function RequestTripScreen({ navigation }) {
               <View style={styles.metricRow}>
                 <Text style={styles.metricLabel}>{t("estimateFare")}</Text>
                 <Text style={styles.metricTotal}>
-                  {estimate?.fare?.total ? `$${estimate.fare.total.toFixed(2)}` : "-"}
+                  {estimate?.fare?.total ? formatCopCurrency(estimate.fare.total, language) : "-"}
                 </Text>
               </View>
             </>
@@ -512,18 +516,6 @@ function RequestTripScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  mapCard: {
-    borderRadius: theme.radius.lg,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    ...theme.shadows.card,
-  },
-  map: {
-    width: "100%",
-    height: 280,
-  },
   formCard: {
     borderWidth: 1,
     borderColor: theme.colors.border,

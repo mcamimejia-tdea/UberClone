@@ -6,25 +6,25 @@ export const TRIP_CATEGORIES = [
 
 export const FARE_CONFIG = {
   Economy: {
-    baseFare: 2.4,
-    perKm: 0.82,
-    perMinute: 0.22,
+    baseFare: 3000,
+    perKm: 1500,
+    perMinute: 400,
     surgeMultiplier: 1,
-    minimumFare: 4.5,
+    minimumFare: 10000,
   },
   XL: {
-    baseFare: 3.8,
-    perKm: 1.12,
-    perMinute: 0.3,
+    baseFare: 6000,
+    perKm: 3000,
+    perMinute: 800,
     surgeMultiplier: 1,
-    minimumFare: 6.4,
+    minimumFare: 20000,
   },
   Premium: {
-    baseFare: 5.6,
-    perKm: 1.62,
-    perMinute: 0.42,
+    baseFare: 9000,
+    perKm: 4500,
+    perMinute: 1200,
     surgeMultiplier: 1,
-    minimumFare: 9.2,
+    minimumFare: 30000,
   },
 }
 
