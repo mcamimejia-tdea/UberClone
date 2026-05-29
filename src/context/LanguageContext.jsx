@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { useAccountContext } from "./AccountContext"
 import { getAccount } from "../services/AccountService"
 
@@ -12,6 +12,26 @@ const translations = {
     navRequestTrip: "Request Trip",
     navActivity: "Activity",
     navAccount: "Account",
+    requestTripTitle: "Request Trip",
+    pickupLabel: "Pickup",
+    destinationLabel: "Destination",
+    pickupPlaceholder: "Search pickup location",
+    destinationPlaceholder: "Where to?",
+    useCurrentLocation: "Use current location",
+    currentLocationLabel: "Current location",
+    tripCategoryLabel: "Category",
+    tripCategoryPlaceholder: "Select category",
+    categoryEconomy: "Economy",
+    categoryXL: "XL",
+    categoryPremium: "Premium",
+    estimateTitle: "Estimated trip",
+    estimateDistance: "Distance",
+    estimateEta: "ETA",
+    estimateFare: "Estimated fare",
+    estimatingTrip: "Calculating route and fare...",
+    gettingLocation: "Getting current location...",
+    requestTripButton: "Request trip",
+    resetTripPlan: "Reset",
     screenCurrentTrip: "Current Trip",
     screenPayment: "Payment",
     accountTitle: "Account",
@@ -31,6 +51,7 @@ const translations = {
     cancel: "Cancel",
     saveAccount: "Save Account",
     saving: "Saving...",
+    loading: "Loading...",
     loadingAccount: "Loading account...",
     alertErrorTitle: "Error",
     alertLoadAccountError: "Could not load account details.",
@@ -44,16 +65,44 @@ const translations = {
     alertInvalidEmail: "Please enter a valid email address.",
     alertMissingFieldsTitle: "Missing fields",
     alertMissingFields: "Please complete all account fields before saving.",
+    alertLocationPermissionTitle: "Location permission needed",
+    alertLocationPermissionMessage: "Enable location access to estimate routes and fares.",
+    alertLocationError: "Could not get your current location right now.",
+    alertPlacesError: "Could not load the selected place. Try another option.",
+    alertRouteError: "Could not estimate this route right now.",
+    alertMissingTripDataTitle: "Trip details missing",
+    alertMissingTripData: "Please set pickup, destination, and category to request a trip.",
     genderFemale: "Female",
     genderMale: "Male",
     genderOther: "Other",
     languageSpanish: "Spanish",
     languageEnglish: "English",
+    loginToRequestTrip: "Please log in to request a trip.",
   },
   es: {
     navRequestTrip: "Pedir viaje",
     navActivity: "Actividad",
     navAccount: "Cuenta",
+    requestTripTitle: "Pedir viaje",
+    pickupLabel: "Origen",
+    destinationLabel: "Destino",
+    pickupPlaceholder: "Busca punto de origen",
+    destinationPlaceholder: "A donde vas?",
+    useCurrentLocation: "Usar ubicacion actual",
+    currentLocationLabel: "Ubicacion actual",
+    tripCategoryLabel: "Categoria",
+    tripCategoryPlaceholder: "Selecciona categoria",
+    categoryEconomy: "Economy",
+    categoryXL: "XL",
+    categoryPremium: "Premium",
+    estimateTitle: "Estimacion del viaje",
+    estimateDistance: "Distancia",
+    estimateEta: "Tiempo estimado",
+    estimateFare: "Tarifa estimada",
+    estimatingTrip: "Calculando ruta y tarifa...",
+    gettingLocation: "Obteniendo ubicacion actual...",
+    requestTripButton: "Solicitar viaje",
+    resetTripPlan: "Reiniciar",
     screenCurrentTrip: "Viaje actual",
     screenPayment: "Pago",
     accountTitle: "Cuenta",
@@ -73,6 +122,7 @@ const translations = {
     cancel: "Cancelar",
     saveAccount: "Guardar cuenta",
     saving: "Guardando...",
+    loading: "Cargando...",
     loadingAccount: "Cargando cuenta...",
     alertErrorTitle: "Error",
     alertLoadAccountError: "No se pudieron cargar los datos de la cuenta.",
@@ -86,11 +136,19 @@ const translations = {
     alertInvalidEmail: "Ingresa un correo válido.",
     alertMissingFieldsTitle: "Campos faltantes",
     alertMissingFields: "Completa todos los campos antes de guardar.",
+    alertLocationPermissionTitle: "Permiso de ubicacion requerido",
+    alertLocationPermissionMessage: "Activa ubicacion para estimar rutas y tarifas.",
+    alertLocationError: "No se pudo obtener tu ubicacion actual.",
+    alertPlacesError: "No se pudo cargar el lugar seleccionado. Intenta otro.",
+    alertRouteError: "No se pudo estimar esta ruta en este momento.",
+    alertMissingTripDataTitle: "Faltan datos del viaje",
+    alertMissingTripData: "Define origen, destino y categoria para solicitar el viaje.",
     genderFemale: "Femenino",
     genderMale: "Masculino",
     genderOther: "Otro",
     languageSpanish: "Español",
     languageEnglish: "Inglés",
+    loginToRequestTrip: "Por favor inicia sesión para solicitar un viaje.",
   },
 }
 
@@ -149,17 +207,17 @@ export function LanguageProvider({ children }) {
     }
   }, [accountId, isReady])
 
-  const setLanguageFromAccountValue = (value) => {
+  const setLanguageFromAccountValue = useCallback((value) => {
     setLanguage(resolveLanguageCode(value))
-  }
+  }, [])
 
-  const t = (key, params) => {
+  const t = useCallback((key, params) => {
     const selectedDictionary = translations[language] ?? translations.en
     const fallbackDictionary = translations.en
     const template = selectedDictionary[key] ?? fallbackDictionary[key] ?? key
 
     return interpolate(template, params)
-  }
+  }, [language])
 
   const value = useMemo(
     () => ({
@@ -167,7 +225,7 @@ export function LanguageProvider({ children }) {
       setLanguageFromAccountValue,
       t,
     }),
-    [language]
+    [language, setLanguageFromAccountValue, t]
   )
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
