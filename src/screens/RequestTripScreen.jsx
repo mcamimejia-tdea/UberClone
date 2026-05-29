@@ -366,7 +366,7 @@ function RequestTripScreen({ navigation }) {
 
     dispatch(resetTripPlanner())
 
-    navigation.navigate("CurrentTrip", { tripId: requestId })
+    navigation.navigate("Payment", { tripId: requestId })
   }
 
   const handleReset = () => {
