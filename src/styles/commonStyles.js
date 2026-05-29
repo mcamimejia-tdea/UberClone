@@ -171,4 +171,16 @@ export default StyleSheet.create({
   disabledButton: {
     opacity: 0.7,
   },
+  mapCard: {
+    borderRadius: theme.radius.lg,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    ...theme.shadows.card,
+  },
+  map: {
+    width: "100%",
+    height: 300,
+  },
 })
