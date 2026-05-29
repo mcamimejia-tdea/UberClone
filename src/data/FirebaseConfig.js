@@ -1,17 +1,32 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp } from "firebase/app"
+import { getFirestore } from "firebase/firestore"
+import {
+  FIREBASE_API_KEY,
+  FIREBASE_AUTH_DOMAIN,
+  FIREBASE_PROJECT_ID,
+  FIREBASE_STORAGE_BUCKET,
+  FIREBASE_MESSAGING_SENDER_ID,
+  FIREBASE_APP_ID,
+} from "@env"
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyA00abjCGM7phjPA1At6JsTj6_-H8sDDjs",
-  authDomain: "uberclone-e4f20.firebaseapp.com",
-  projectId: "uberclone-e4f20",
-  storageBucket: "uberclone-e4f20.firebasestorage.app",
-  messagingSenderId: "322477604554",
-  appId: "1:322477604554:web:f476b889875fea97183e33"
-};
+  apiKey: FIREBASE_API_KEY,
+  authDomain: FIREBASE_AUTH_DOMAIN,
+  projectId: FIREBASE_PROJECT_ID,
+  storageBucket: FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
+  appId: FIREBASE_APP_ID,
+}
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+const missingFirebaseKeys = Object.entries(firebaseConfig)
+  .filter(([, value]) => !value)
+  .map(([key]) => key)
+
+if (missingFirebaseKeys.length > 0) {
+  throw new Error(
+    `Missing Firebase env vars for: ${missingFirebaseKeys.join(", ")}. Update your .env file.`
+  )
+}
+
+const app = initializeApp(firebaseConfig)
+export const db = getFirestore(app)

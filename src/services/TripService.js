@@ -85,3 +85,14 @@ export const updateTripStatus = async (tripId, status) => {
 	const docRef = doc(db, TRIPS_COLLECTION, tripId);
 	await updateDoc(docRef, { status });
 };
+
+/**
+ * Update payment details for a trip document.
+ * @param {string} tripId
+ * @param {{ status: "approved" | "pending" | "rejected" | "cancelled", amount: number, preferenceId?: string, paymentId?: string, paymentMethodId?: string, updatedAt: string }} payment
+ * @returns {Promise<void>}
+ */
+export const updateTripPayment = async (tripId, payment) => {
+	const docRef = doc(db, TRIPS_COLLECTION, tripId);
+	await updateDoc(docRef, { payment });
+};
